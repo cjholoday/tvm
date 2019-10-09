@@ -85,7 +85,7 @@ OPS = [
         {'func': relay.exp,      'arity': 1, 'weight': 1},
         {'func': mod,      'arity': 2, 'weight': 1},
         # {'func': relay.nn.conv2d,  'arity': 2, 'weight': 1},
-        # {'func': relay.nn.dense,     'arity': 2, 'weight': 1},
+        {'func': relay.nn.dense,     'arity': 2, 'weight': 1},
 
 ]
 
