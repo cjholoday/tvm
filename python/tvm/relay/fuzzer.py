@@ -53,18 +53,18 @@ def fuzz_expr(expr, tvm_pass):
     if not check_outs(out_org, out_new):
         return (conc_args, out_org, out_new)
 
-OPS = relay.add, relay.subtract, relay.multiply, relay.divide, relay.sign
 
 OPS = [
         # level 1
-        {'func': relay.add,      'arity': 2, 'weight': 1},
-        {'func': relay.subtract, 'arity': 2, 'weight': 1},
-        {'func': relay.multiply, 'arity': 2, 'weight': 1},
-        {'func': relay.divide,   'arity': 2, 'weight': 0},
-        {'func': relay.sign,     'arity': 1, 'weight': 1},
-        {'func': relay.sigmoid,   'arity': 1, 'weight': 1},
-        {'func': relay.tanh,      'arity': 1, 'weight': 1},
-        {'func': relay.nn.relu,     'arity': 1, 'weight': 1},
+        # {'func': relay.add,      'arity': 2 'weight': 1},
+        # {'func': relay.subtract, 'arity': 2, 'weight': 1},
+        # {'func': relay.multiply, 'arity': 2, 'weight': 1},
+        # {'func': relay.divide,   'arity': 2, 'weight': 0},
+        # {'func': relay.sign,     'arity': 1, 'weight': 1},
+        # {'func': relay.sigmoid,  'arity': 1, 'weight': 1},
+        # {'func': relay.tanh,     'arity': 1, 'weight': 1},
+        {'func': relay.nn.relu,  'arity': 1, 'weight': 1},
+        {'func': relay.nn.conv2d,  'arity': 2, 'weight': 1},
         #{'func': relay.log,      'arity': 1, 'weight': 1},
         #{'func': relay.sqrt,     'arity': 1, 'weight': 1},
         #{'func': relay.rsqrt,    'arity': 1, 'weight': 1},
@@ -83,7 +83,7 @@ def choose_op():
         weights.append(op['weight'])
     return random.choices(OPS, weights=weights)[0]
 
-SHAPE = 2, 2
+SHAPE = 1, 1, 2, 2
 
 def gen_op_seq(ops, length):
     seq = []
@@ -111,7 +111,7 @@ def gen_prog(op_seq, shape, dtype):
     return relay.Function(args, out)
 
 def fuzz_pass(tvm_pass,
-              prog_len=10,
+              prog_len=2,
               ops=OPS,
               shape=SHAPE,
               dtype='float32',
@@ -124,10 +124,17 @@ def fuzz_pass(tvm_pass,
         # Bug we found!
         # check_grad(prog)
 
+
 def test():
-    tvm_pass = transform.PartialEvaluate()
+    tvm_pass = transform.partialevaluate()
     fuzz_pass(tvm_pass)
 
+def failing_tvm_typecheck():
+    tvm_pass = transform.PartialEvaluate()
+    ops = [
+        {'func': relay.nn.conv2d,  'arity': 2, 'weight': 1},
+    ]
+    fuzz_pass(tvm_pass, prog_len=2, ops = ops, shape=[1, 1, 2, 2])
 
 if __name__ == '__main__':
     SEED = 5
@@ -136,5 +143,6 @@ if __name__ == '__main__':
     print('========== STARTING ============')
     print('Testing ...')
     print('\tSEED:%d'%SEED)
-    test()
+    # test()
+    failing_tvm_typecheck()
     print('========== SUCCESS! ============')
