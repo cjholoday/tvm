@@ -70,9 +70,12 @@ def mod(top, bot):
     return relay.mod(top, relay.add(relay.abs(bot), relay.const(1.0)))
 
 def conv2d(e1, e2):
-    x1 = relay.reshape(e1, (2, 2, 2, 2))
-    x2 = relay.reshape(e2, (2, 2, 2, 2))
-    return relay.nn.conv2d(x1, x2)
+    x1 = relay.expand_dims(e1, 1, 1)
+    x1 = relay.expand_dims(x1, 1, 1)
+    x2 = relay.expand_dims(e2, 1, 1)
+    x2 = relay.expand_dims(x2, 1, 1)
+    c = relay.nn.conv2d(x2, x2)
+    return relay.reshape(c, SHAPE)
 
 
 OPS = [
