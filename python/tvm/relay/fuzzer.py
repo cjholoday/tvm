@@ -1,6 +1,7 @@
 import types
 import inspect
 import functools
+import random
 
 import tvm
 from tvm import relay
@@ -50,9 +51,31 @@ def fuzz_expr(expr, tvm_pass):
 
     assert check_outs(out_org, out_new), "Outputs differ.\nout_org: {}\nout_new: {}".format(out_org, out_new)
 
-tvm_pass = transform.PartialEvaluate()
+# tvm_pass = transform.PartialEvaluate()
 print(mlp.get_net(1))
-for i in range(10):
-    fuzz_expr(mlp.get_net(1), tvm_pass)
+# for i in range(10):
+    # fuzz_expr(mlp.get_net(1), tvm_pass)
 
-print('done')
+OPS = relay.add, relay.subtract, relay.multiply, relay.divide, relay.sign
+
+OPS = [
+      {'func': relay.add,      'arity': 2},
+      {'func': relay.subtract, 'arity': 2},
+      {'func': relay.multiply, 'arity': 2},
+      {'func': relay.divide,   'arity': 2},
+      {'func': relay.sign,     'arity': 2},
+]
+SHAPE = 1, 1, 28, 28
+
+def gen_op_seq(ops, length):
+    seq = []
+    for i in range(length):
+        seq.append(random.choice(ops))
+
+    return seq
+
+x = relay.var("x")
+print(relay.add(x, x))
+print(gen_op_seq(OPS, 3))
+
+print('=============================')
