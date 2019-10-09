@@ -131,14 +131,15 @@ def gen_prog(op_seq, shape, dtype):
     return relay.Function(args, out)
 
 def fuzz_pass(tvm_pass,
-              prog_len=10,
+              prog_len=20,
               ops=OPS,
               shape=SHAPE,
               dtype='float32',
-              runs=300):
+              runs=500):
 
     for i in range(runs):
         prog = gen_prog(gen_op_seq(ops, prog_len), shape, dtype)
+        print(prog)
         res = fuzz_expr(prog, tvm_pass)
         assert res is None, "Pass get different outputs on:\n{},\nouts:{}".format(prog, res)
         # Bug we found!
