@@ -6,6 +6,7 @@ import random
 import tvm
 from tvm import relay
 from tvm.relay.testing import mlp
+from tvm.relay.testing import check_grad
 from tvm.relay import transform
 from tvm.relay.backend import interpreter
 
@@ -57,10 +58,24 @@ def fuzz_expr(expr, tvm_pass):
 OPS = relay.add, relay.subtract, relay.multiply, relay.divide, relay.sign
 
 OPS = [
-        {'func': relay.add,      'arity': 2, 'weight': 3},
+        # level 1
+        {'func': relay.add,      'arity': 2, 'weight': 1},
         {'func': relay.subtract, 'arity': 2, 'weight': 1},
         {'func': relay.multiply, 'arity': 2, 'weight': 1},
         {'func': relay.sign,     'arity': 1, 'weight': 1},
+        {'func': relay.sigmoid,   'arity': 1, 'weight': 1},
+        {'func': relay.tanh,      'arity': 1, 'weight': 1},
+        {'func': relay.nn.relu,     'arity': 1, 'weight': 1},
+        #{'func': relay.log,      'arity': 1, 'weight': 1},
+        #{'func': relay.sqrt,     'arity': 1, 'weight': 1},
+        #{'func': relay.rsqrt,    'arity': 1, 'weight': 1},
+        #{'func': relay.exp,      'arity': 1, 'weight': 1},
+        #{'func': relay.mod,      'arity': 2, 'weight': 1},
+
+        # level 2
+        #{'func': relay.nn.conv2d,     'arity': 1, 'weight': 1},
+        #{'func': relay.nn.dense,     'arity': 2, 'weight': 1},
+
 ]
 
 def choose_op():
@@ -101,19 +116,25 @@ def fuzz_pass(tvm_pass,
               ops=OPS,
               shape=SHAPE,
               dtype='float32',
-              runs=100):
+              runs=300):
 
     for i in range(runs):
         prog = gen_prog(gen_op_seq(ops, prog_len), shape, dtype)
         res = fuzz_expr(prog, tvm_pass)
-
         assert res is None, "Pass get different outputs on:\n{},\nouts:{}".format(prog, res)
+        check_grad(prog)
 
 def test():
     tvm_pass = transform.PartialEvaluate()
     fuzz_pass(tvm_pass)
 
 if __name__ == '__main__':
+    SEED = 5
+    np.random.seed(SEED)
+
+    print("========================")
+    print('Testing ...')
+    print('\tSEED:%d'%SEED)
     test()
 
-print('=============================')
+print('========== SUCCESS! ============')
