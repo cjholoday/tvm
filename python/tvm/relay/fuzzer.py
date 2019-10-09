@@ -60,7 +60,6 @@ OPS = [
         {'func': relay.add,      'arity': 2, 'weight': 3},
         {'func': relay.subtract, 'arity': 2, 'weight': 1},
         {'func': relay.multiply, 'arity': 2, 'weight': 1},
-        {'func': relay.divide,   'arity': 2, 'weight': 1},
         {'func': relay.sign,     'arity': 1, 'weight': 1},
 ]
 
