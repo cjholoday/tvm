@@ -69,6 +69,11 @@ def div(top, bot):
 def mod(top, bot):
     return relay.mod(top, relay.add(relay.abs(bot), relay.const(1.0)))
 
+def conv2d(e1, e2):
+    x1 = relay.reshape(e1, (2, 2, 2, 2))
+    x2 = relay.reshape(e2, (2, 2, 2, 2))
+    return relay.nn.conv2d(x1, x2)
+
 
 OPS = [
         {'func': relay.add,      'arity': 2, 'weight': 1},
@@ -84,7 +89,7 @@ OPS = [
         {'func': rsqrt,    'arity': 1, 'weight': 1},
         {'func': relay.exp,      'arity': 1, 'weight': 1},
         {'func': mod,      'arity': 2, 'weight': 1},
-        # {'func': relay.nn.conv2d,  'arity': 2, 'weight': 1},
+        {'func': conv2d,  'arity': 2, 'weight': 1},
         {'func': relay.nn.dense,     'arity': 2, 'weight': 1},
 
 ]
@@ -95,7 +100,7 @@ def choose_op():
         weights.append(op['weight'])
     return random.choices(OPS, weights=weights)[0]
 
-SHAPE = 1, 1, 2, 2
+SHAPE = 4, 4
 
 def gen_op_seq(ops, length):
     seq = []
