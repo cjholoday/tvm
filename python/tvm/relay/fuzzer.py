@@ -59,18 +59,25 @@ print(mlp.get_net(1))
 OPS = relay.add, relay.subtract, relay.multiply, relay.divide, relay.sign
 
 OPS = [
-      {'func': relay.add,      'arity': 2},
-      {'func': relay.subtract, 'arity': 2},
-      {'func': relay.multiply, 'arity': 2},
-      {'func': relay.divide,   'arity': 2},
-      {'func': relay.sign,     'arity': 2},
+        {'func': relay.add,      'arity': 2, 'weight': 3},
+        {'func': relay.subtract, 'arity': 2, 'weight': 1},
+        {'func': relay.multiply, 'arity': 2, 'weight': 1},
+        {'func': relay.divide,   'arity': 2, 'weight': 1},
+        {'func': relay.sign,     'arity': 2, 'weight': 1},
 ]
+
+def choose_op():
+    weights = []
+    for op in OPS:
+        weights.append(op['weight'])
+    return random.choices(OPS, weights=weights)
+
 SHAPE = 1, 1, 28, 28
 
 def gen_op_seq(ops, length):
     seq = []
     for i in range(length):
-        seq.append(random.choice(ops))
+        seq.append(choose_op())
 
     return seq
 
