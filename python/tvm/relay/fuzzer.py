@@ -53,27 +53,39 @@ def fuzz_expr(expr, tvm_pass):
     if not check_outs(out_org, out_new):
         return (conc_args, out_org, out_new)
 
+# Functions for fuzzing
+def sqrt(expr):
+    return relay.sqrt(relay.abs(expr))
+
+def rsqrt(expr):
+    return relay.rsqrt(relay.add(relay.abs(expr), relay.const(1.0)))
+
+def log(expr):
+    return relay.log(relay.add(relay.abs(expr), relay.const(1.0)))
+
+def div(top, bot):
+    return relay.div(top, relay.add(relay.abs(bot), relay.const(1.0)))
+
+def mod(top, bot):
+    return relay.mod(top, relay.add(relay.abs(bot), relay.const(1.0)))
+
 
 OPS = [
-        # level 1
-        # {'func': relay.add,      'arity': 2 'weight': 1},
-        # {'func': relay.subtract, 'arity': 2, 'weight': 1},
-        # {'func': relay.multiply, 'arity': 2, 'weight': 1},
-        # {'func': relay.divide,   'arity': 2, 'weight': 0},
-        # {'func': relay.sign,     'arity': 1, 'weight': 1},
-        # {'func': relay.sigmoid,  'arity': 1, 'weight': 1},
-        # {'func': relay.tanh,     'arity': 1, 'weight': 1},
+        {'func': relay.add,      'arity': 2, 'weight': 1},
+        {'func': relay.subtract, 'arity': 2, 'weight': 1},
+        {'func': relay.multiply, 'arity': 2, 'weight': 1},
+        {'func': div,   'arity': 2, 'weight': 0},
+        {'func': relay.sign,     'arity': 1, 'weight': 1},
+        {'func': relay.sigmoid,  'arity': 1, 'weight': 1},
+        {'func': relay.tanh,     'arity': 1, 'weight': 1},
         {'func': relay.nn.relu,  'arity': 1, 'weight': 1},
-        {'func': relay.nn.conv2d,  'arity': 2, 'weight': 1},
-        #{'func': relay.log,      'arity': 1, 'weight': 1},
-        #{'func': relay.sqrt,     'arity': 1, 'weight': 1},
-        #{'func': relay.rsqrt,    'arity': 1, 'weight': 1},
-        #{'func': relay.exp,      'arity': 1, 'weight': 1},
-        #{'func': relay.mod,      'arity': 2, 'weight': 1},
-
-        # level 2
-        #{'func': relay.nn.conv2d,     'arity': 1, 'weight': 1},
-        #{'func': relay.nn.dense,     'arity': 2, 'weight': 1},
+        {'func': log,      'arity': 1, 'weight': 1},
+        {'func': sqrt,     'arity': 1, 'weight': 1},
+        {'func': rsqrt,    'arity': 1, 'weight': 1},
+        {'func': relay.exp,      'arity': 1, 'weight': 1},
+        {'func': mod,      'arity': 2, 'weight': 1},
+        # {'func': relay.nn.conv2d,  'arity': 2, 'weight': 1},
+        # {'func': relay.nn.dense,     'arity': 2, 'weight': 1},
 
 ]
 
@@ -111,7 +123,7 @@ def gen_prog(op_seq, shape, dtype):
     return relay.Function(args, out)
 
 def fuzz_pass(tvm_pass,
-              prog_len=2,
+              prog_len=10,
               ops=OPS,
               shape=SHAPE,
               dtype='float32',
@@ -126,7 +138,7 @@ def fuzz_pass(tvm_pass,
 
 
 def test():
-    tvm_pass = transform.partialevaluate()
+    tvm_pass = transform.PartialEvaluate()
     fuzz_pass(tvm_pass)
 
 def failing_tvm_typecheck():
@@ -143,6 +155,6 @@ if __name__ == '__main__':
     print('========== STARTING ============')
     print('Testing ...')
     print('\tSEED:%d'%SEED)
-    # test()
-    failing_tvm_typecheck()
+    test()
+    # failing_tvm_typecheck()
     print('========== SUCCESS! ============')
