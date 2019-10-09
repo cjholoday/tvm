@@ -61,16 +61,16 @@ OPS = [
         {'func': relay.subtract, 'arity': 2, 'weight': 1},
         {'func': relay.multiply, 'arity': 2, 'weight': 1},
         {'func': relay.divide,   'arity': 2, 'weight': 1},
-        {'func': relay.sign,     'arity': 2, 'weight': 1},
+        {'func': relay.sign,     'arity': 1, 'weight': 1},
 ]
 
 def choose_op():
     weights = []
     for op in OPS:
         weights.append(op['weight'])
-    return random.choices(OPS, weights=weights)
+    return random.choices(OPS, weights=weights)[0]
 
-SHAPE = 1, 1, 28, 28
+SHAPE = 2, 2
 
 def gen_op_seq(ops, length):
     seq = []
