@@ -34,6 +34,7 @@ def check_outs(o1, o2):
 def fuzz_expr(expr, tvm_pass):
     mod = tvm.relay.Module()
     mod["main"] = expr
+    # print(mod)
 
     # Generate random concrete arguments based on the argument types
     conc_args = []
@@ -46,15 +47,12 @@ def fuzz_expr(expr, tvm_pass):
 
     # Run the pass
     new_mod = tvm_pass(mod)
+    # print(new_mod)
     intrp = relay.create_executor()
     out_new = intrp.evaluate(new_mod["main"])(*conc_args)
 
-    assert check_outs(out_org, out_new), "Outputs differ.\nout_org: {}\nout_new: {}".format(out_org, out_new)
-
-# tvm_pass = transform.PartialEvaluate()
-print(mlp.get_net(1))
-# for i in range(10):
-    # fuzz_expr(mlp.get_net(1), tvm_pass)
+    if not check_outs(out_org, out_new):
+        return (conc_args, out_org, out_new)
 
 OPS = relay.add, relay.subtract, relay.multiply, relay.divide, relay.sign
 
@@ -81,8 +79,42 @@ def gen_op_seq(ops, length):
 
     return seq
 
-x = relay.var("x")
-print(relay.add(x, x))
-print(gen_op_seq(OPS, 3))
+def gen_prog(op_seq, shape, dtype):
+    init = relay.var('arg', shape=shape, dtype=dtype)
+    lives = [init]
+    out = init
+
+    for op in op_seq:
+        # first arg is always the last computed var
+        args = [out]
+        # Remaining arguments are randomly chosen from live set
+        for i in range(op['arity'] - 1):
+            args.append(random.choice(lives))
+
+        # output var
+        out = op['func'](*args)
+        lives.append(out)
+    args = relay.analysis.free_vars(out)
+    return relay.Function(args, out)
+
+def fuzz_pass(tvm_pass,
+              prog_len=10,
+              ops=OPS,
+              shape=SHAPE,
+              dtype='float32',
+              runs=100):
+
+    for i in range(runs):
+        prog = gen_prog(gen_op_seq(ops, prog_len), shape, dtype)
+        res = fuzz_expr(prog, tvm_pass)
+
+        assert res is None, "Pass get different outputs on:\n{},\nouts:{}".format(prog, res)
+
+def test():
+    tvm_pass = transform.PartialEvaluate()
+    fuzz_pass(tvm_pass)
+
+if __name__ == '__main__':
+    test()
 
 print('=============================')
